@@ -5,9 +5,7 @@ date: "7/10/2020"
 output: html_document
 ---
 
-## Executive Summary
-
-## load the required packages
+## Load the required packages
 ```{r results='hide', message=FALSE}
 library(caret); library(rattle); library(rpart); library(rpart.plot); library(randomForest); library(repmis);
 library(lattice); library(ggplot2); library(readr); library(gbm)
@@ -27,20 +25,20 @@ training <- training[, colSums(is.na(training)) == 0]
 testing <- testing[, colSums(is.na(testing)) == 0]
 ```
 
-#remove irrelevant variables to the prediction
+remove irrelevant variables to the prediction
 ```{r results='hide', message=FALSE}
 newtraining <- training[,-c(1:7)]
 newtesting <- testing[, -c(1:7)]
 ```
 
-#For cross validation purpose, the training data will be split into training training and training testing. 
+For cross validation purpose, the training data will be split into training training and training testing. 
 ```{r echo=FALSE}
 cv <- createDataPartition(y=newtraining$classe, p=0.7, list=FALSE)
 training_train <- newtraining[cv, ] 
 training_test <- newtraining[-cv, ]
 ```
 
-###Decision Tree
+## Decision Tree
 ```{r echo=FALSE}
 modDT <- rpart(classe ~ ., data=training_train, method="class")
 rpart.plot(modDT, main = "Classification Tree", extra=102, under=TRUE, faclen = 0, cex = .5)
@@ -54,12 +52,12 @@ accDT
 
 ```{r echo=FALSE}
 accDT$overall['Accuracy']
-plot(accDT$table, col=Dtree$byClass, main=paste("Decision Tree - Accuracy =", round(accDT$overall['Accuracy'], 4)))
+plot(accDT$table, col=accDT$byClass, main=paste("Decision Tree - Accuracy =", round(accDT$overall['Accuracy'], 4)))
 ```
 We see that the accuracy rate of the model is low: 0.7274,the out-of-sample-error is about 0.3 which is considerable.
 
 
-### Classification tree
+## Classification tree
 ```{r echo=FALSE}
 control <- trainControl(method = "cv", number = 5)
 
@@ -73,7 +71,7 @@ fancyRpartPlot(modRpart$finalModel)
 
 ```{r echo=FALSE}
 predRpart <- predict(modRpart, training_test)
-accRpart <- confusionMatrix(training_test$classe, predict_rpart)
+accRpart <- confusionMatrix(training_test$classe, predRpart)
 accRpart
 ```
 
@@ -81,7 +79,7 @@ accRpart
 accRpart$overall['Accuracy']
 ```
 
-### Boosted Logistic Regression
+## Boosted Logistic Regression
 ```{r echo=FALSE}
 modBLR <- train(classe ~ ., data = training_train, method = "LogitBoost", trControl = control)
 predBLR <- predict(modBLR, training_test)
@@ -93,7 +91,7 @@ print(modBLR)
 accBLR$overall['Accuracy']
 ```
 
-###Gradient Boosting
+## Gradient Boosting
 ```{r echo=FALSE}
 controlGBM <- trainControl(method = "repeatedcv", number = 5, repeats = 1)
 modGBM <- train(classe ~ ., data=training_train, method = "gbm", trControl = controlGBM, verbose = FALSE)
@@ -111,7 +109,7 @@ accGBM
 accGBM$overall['Accuracy']
 ```
 
-###Random Forest
+## Random Forest
 ```{r echo=FALSE}
 modrf <- randomForest(classe ~., data = training_train, method = "class")
 #rfmod <- train(classe ~., data = training_train, method="rf", trControl = control)
@@ -130,21 +128,17 @@ accrf$overall['Accuracy']
 ```
 Looking at the results, clearly, the random forest model provides a more accurate prediction of classe with 0.9955 compare to decision tree’s 0.7488. The expected out-of-sample error is estimated at 0.005.
 
-#Predictio on Testing
-```{r echo=FALSE}
-predict(modrf, newtesting)
-```
-
-#Variable Importance
+Variable Importance
 ```{r echo=FALSE}
 varImp(modrf)
 ```
 
-#plot of the model error rate by number of trees and 20 most important variables (out of 52)
+plot of the model error rate by number of trees and 20 most important variables (out of 52)
 ```{r echo=FALSE}
 plot(modrf, main="Random forest model error rate by number of trees")
 ```
 
+## Accurary comparison among models
 ```{r echo=FALSE}
 accurary <- c(accDT$overall['Accuracy'], accRpart$overall['Accuracy'], accBLR$overall['Accuracy'], accGBM$overall['Accuracy'], accrf$overall['Accuracy'])
 models <- c("Decision Tree", "CART", "Boosted Logistic Regression", "Gradient Boosting", "Random Forest")
@@ -154,8 +148,11 @@ ggplot(x, aes(x = Model, y = Accuracy)) +
   geom_bar(stat = "identity", aes(fill = Model)) +
   theme_bw() + theme(legend.position = "none")
 ```
+Random forest has the highest accurary.
 
 
-
-
+# Predictio on Testing
+```{r echo=FALSE}
+predict(modrf, newtesting)
+```
 
