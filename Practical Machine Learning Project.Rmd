@@ -59,6 +59,7 @@ accDT
 accDT$overall['Accuracy']
 plot(accDT$table, col=accDT$byClass, main=paste("Decision Tree - Accuracy =", round(accDT$overall['Accuracy'], 4)))
 ```
+
 The accuracy rate of the model is low: 0.7242.
 
 
